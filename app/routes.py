@@ -70,11 +70,11 @@ def add_user_to_organisation(org_id):
         user = User.query.get_or_404(user_id)
 
         # Check if the requesting user is authorized to add users
-        if not any(u.id == get_jwt_identity() for u in organisation.users):
+        if not is_authorized(get_jwt_identity(), organisation):
             return jsonify({"status": "Unauthorized", "message": "You are not authorized to add users to this organisation", "statusCode": 401}), 401
 
         # Check if the user is already in the organization
-        if any(u.id == user_id for u in organisation.users):
+        if is_user_in_organisation(user_id, organisation):
             return jsonify({"status": "Conflict", "message": "User is already in the organisation", "statusCode": 409}), 409
 
         organisation.users.append(user)
@@ -83,6 +83,11 @@ def add_user_to_organisation(org_id):
         return jsonify({"status": "success", "message": "User added to organisation successfully"}), 200
 
     except Exception as e:
-        logging.error(f"Error occurred: {str(e)}")
+        logging.error(f"Error occurred in add_user_to_organisation: {str(e)}")
         return jsonify({"status": "Internal Server Error", "message": "An error occurred", "statusCode": 500}), 500
 
+def is_authorized(current_user_id, organisation):
+    return any(user.id == current_user_id for user in organisation.users)
+
+def is_user_in_organisation(user_id, organisation):
+    return any(user.id == user_id for user in organisation.users)
