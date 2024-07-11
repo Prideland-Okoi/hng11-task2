@@ -18,11 +18,11 @@ def register():
 
     # Validate email format
     if not is_valid_email(data['email']):
-        return jsonify({"errors":[{"field": "Invalid email", "message": "Invalid email format"}]}), 400
+        return jsonify({"errors":[{"field": "email", "message": "Invalid email format"}]}), 400
 
     # Validate password strength
     if not is_valid_password(data['password']):
-        return jsonify({"errors":[{"field": "Invalid password","message": 'Password must be at least 8 characters long and contain a combination of letters, numbers, and special characters'}]}), 400
+        return jsonify({"errors":[{"field": "password","message": 'Password must be at least 8 characters long and contain a combination of letters, numbers, and special characters'}]}), 400
 
     if User.query.filter_by(email=data['email']).first():
         return jsonify({"errors": [{"field": "email", "message": "Email already in use"}]}), 422
