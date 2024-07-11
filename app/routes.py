@@ -58,16 +58,30 @@ def create_organisation():
 @main.route('/api/organisations/<org_id>/users', methods=['POST'])
 @jwt_required()
 def add_user_to_organisation(org_id):
-    data = request.get_json()
-    user_id = data.get('userId')
+    try:
+        data = request.get_json()
+        if not data or 'userId' not in data:
+            return jsonify({"status": "Bad request", "message": "Missing userId in request", "statusCode": 400}), 400
 
-    organisation = Organisation.query.get_or_404(org_id)
-    user = User.query.get_or_404(user_id)
+        user_id = data.get('userId')
 
-    if not any(u.id == get_jwt_identity() for u in organisation.users):
-        return jsonify({"status": "Bad request", "message": "Unauthorized", "statusCode": 401}), 401
+        organisation = Organisation.query.get_or_404(org_id)
+        user = User.query.get_or_404(user_id)
 
-    organisation.users.append(user)
-    db.session.commit()
+        # Check if the requesting user is authorized to add users
+        if not any(u.id == get_jwt_identity() for u in organisation.users):
+            return jsonify({"status": "Unauthorized", "message": "You are not authorized to add users to this organisation", "statusCode": 401}), 401
 
-    return jsonify({"status": "success", "message": "User added to organisation successfully"}), 200
+        # Check if the user is already in the organization
+        if any(u.id == user_id for u in organisation.users):
+            return jsonify({"status": "Conflict", "message": "User is already in the organisation", "statusCode": 409}), 409
+
+        organisation.users.append(user)
+        db.session.commit()
+
+        return jsonify({"status": "success", "message": "User added to organisation successfully"}), 200
+
+    except Exception as e:
+        logging.error(f"Error occurred: {str(e)}")
+        return jsonify({"status": "Internal Server Error", "message": "An error occurred", "statusCode": 500}), 500
+
