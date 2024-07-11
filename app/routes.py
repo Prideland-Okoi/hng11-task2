@@ -1,4 +1,5 @@
 # app/routes.py
+import logging
 from flask import Blueprint, jsonify, request
 from app.models import User, Organisation, db
 from flask_jwt_extended import jwt_required, get_jwt_identity
